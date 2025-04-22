@@ -6,6 +6,14 @@ import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+import java.awt.BasicStroke;
+import java.awt.Color;
+
+
 
 public class CompareByMemoryBudget {
 
@@ -151,6 +159,28 @@ public class CompareByMemoryBudget {
                 true,
                 false
         );
+
+        CategoryPlot errorPlot = (CategoryPlot) errorChart.getPlot();
+        LineAndShapeRenderer errorRenderer =
+            (LineAndShapeRenderer) errorPlot.getRenderer();
+        
+        errorRenderer.setSeriesPaint(0, Color.RED);
+        errorRenderer.setSeriesStroke(0, new BasicStroke(3.0f));
+        errorRenderer.setSeriesPaint(1, Color.BLUE);
+        errorRenderer.setSeriesStroke(1, new BasicStroke(3.0f));
+        errorRenderer.setSeriesPaint(2, Color.BLACK);
+        errorRenderer.setSeriesStroke(2, new BasicStroke(3.0f));
+        
+        CategoryPlot runPlot = (CategoryPlot) runtimeChart.getPlot();
+        LineAndShapeRenderer runRenderer =
+            (LineAndShapeRenderer) runPlot.getRenderer();
+        
+        runRenderer.setSeriesPaint(0, Color.RED);
+        runRenderer.setSeriesStroke(0, new BasicStroke(3.0f));
+        runRenderer.setSeriesPaint(1, Color.BLUE);
+        runRenderer.setSeriesStroke(1, new BasicStroke(3.0f));
+        runRenderer.setSeriesPaint(2, Color.BLACK);
+        runRenderer.setSeriesStroke(2, new BasicStroke(3.0f));
 
         ChartFrame errorFrame = new ChartFrame("Error Rate by Budget", errorChart);
         errorFrame.pack();

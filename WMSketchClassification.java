@@ -7,7 +7,6 @@ public class WMSketchClassification {
 
     // Data Structures
  
-    // A feature is a simple pair (featureIndex, featureValue)
     public static class Feature {
         public int featureIndex;
         public float featureValue;
@@ -17,7 +16,6 @@ public class WMSketchClassification {
         }
     }
 
-    // Triple holds a tuple (featureId, featureValue, weight)
     public static class Triple {
         public int featureId;
         public float featureValue;
@@ -29,7 +27,6 @@ public class WMSketchClassification {
         }
     }
 
-    // Pair represents a key-value pair used in the priorityQueue.
     public static class Pair {
         public int key;
         public float featureValue;
@@ -39,7 +36,6 @@ public class WMSketchClassification {
         }
     }
 
-    // A sparse example holds a label and a list of features.
     public static class SparseExample {
         public int label;
         public List<Feature> featureList;
@@ -49,14 +45,12 @@ public class WMSketchClassification {
         }
     }
 
-    // A sparse dataset holds many examples and the maximum feature dimension.
     public static class SparseDataset {
         public List<SparseExample> examples = new ArrayList<>();
         public int dimensionality = 0;
     }
 
-    // Utility Functions
-    public static class Util {
+    public static class Helper_Function {
         public static float sigmoid(float x) {
             return (float)(1.0 / (1.0 + Math.exp(-x)));
         }
@@ -65,10 +59,9 @@ public class WMSketchClassification {
         }
     }
 
-    // Model Interface
     public interface TopKFeatures {
-        boolean predict(List<Feature> featureList);
-        boolean update(List<Feature> featureList, boolean label);
+        boolean Value_Prediction(List<Feature> featureList);
+        boolean Internal_weiight_update(List<Feature> featureList, boolean label);
         List<Feature> getTopFeatures();
         float getBias();
     }
@@ -91,7 +84,7 @@ public class WMSketchClassification {
             this.iterationCount = 1;
         }
 
-        protected float dot(List<Feature> featureList) {
+        protected float product(List<Feature> featureList) {
             float sum = modelBias;
             for (Feature f : featureList) {
                 if (f.featureIndex < modelWeights.length) {
@@ -102,15 +95,15 @@ public class WMSketchClassification {
         }
 
         @Override
-        public boolean predict(List<Feature> featureList) {
-            return dot(featureList) >= 0;
+        public boolean Value_Prediction(List<Feature> featureList) {
+            return product(featureList) >= 0;
         }
 
         @Override
-        public boolean update(List<Feature> featureList, boolean label) {
+        public boolean Internal_weiight_update(List<Feature> featureList, boolean label) {
             int classifier_label = label ? 1 : -1;
-            float raw_model_score = dot(featureList);
-            float grad = Util.logisticGrad(classifier_label * raw_model_score);
+            float raw_model_score = product(featureList);
+            float Gradient = Helper_Function.logisticGrad(classifier_label * raw_model_score);
             float denominator = 1.0f
                             + learningRateInitial 
                             * regularizationFactor 
@@ -120,11 +113,11 @@ public class WMSketchClassification {
             featureList.stream()
             .filter(OneFeature -> OneFeature.featureIndex < modelWeights.length)
             .forEach(OneFeature ->
-                modelWeights[OneFeature.featureIndex] -= scaledLearningRate * classifier_label * grad * OneFeature.featureValue
+                modelWeights[OneFeature.featureIndex] -= scaledLearningRate * classifier_label * Gradient * OneFeature.featureValue
             );
  
             float adjustmentFactor = scaledLearningRate * classifier_label;
-            float biasChange       = adjustmentFactor * grad;
+            float biasChange       = adjustmentFactor * Gradient;
             modelBias              = modelBias - biasChange;
             iterationCount++;
             return raw_model_score >= 0;
@@ -139,9 +132,9 @@ public class WMSketchClassification {
             }
 
             list.sort((first, second) -> {
-                float absFirst  = Math.abs(first.featureValue);
-                float absSecond = Math.abs(second.featureValue);
-                return Float.compare(absSecond, absFirst);
+                float First_Value  = Math.abs(first.featureValue);
+                float Second_Value = Math.abs(second.featureValue);
+                return Float.compare(Second_Value, First_Value);
             });
 
             List<Feature> resultList;
@@ -178,7 +171,7 @@ public class WMSketchClassification {
         }
     
         @Override
-        public boolean predict(List<Feature> featureList) {
+        public boolean Value_Prediction(List<Feature> featureList) {
             float sum = logisticSketch.bias();
             Iterator<Feature> it = featureList.iterator();
             while (it.hasNext()) {
@@ -198,8 +191,8 @@ public class WMSketchClassification {
         }
     
         @Override
-        public boolean update(List<Feature> featureList, boolean label) {
-            logisticSketch.update(updatedWeights, featureList, label);
+        public boolean Internal_weiight_update(List<Feature> featureList, boolean label) {
+            logisticSketch.Internal_weiight_update(updatedWeights, featureList, label);
             int pos = 0;
             while (pos < featureList.size()) {
                 Feature OneFeature     = featureList.get(pos);
@@ -209,7 +202,7 @@ public class WMSketchClassification {
                 priorityQueue.insertOrChange(slot, updatedWeights[slot]);
                 pos++;
             }
-            return predict(featureList);
+            return Value_Prediction(featureList);
             
         }
     
@@ -284,7 +277,7 @@ public class WMSketchClassification {
             this.priorityQueue = new Heap(k);
         }
     
-        public float dot(List<Feature> featureValues) {
+        public float product(List<Feature> featureValues) {
             float raw_model_score = 0.0f;
             Iterator<Feature> iter = featureValues.iterator();
             while (iter.hasNext()) {
@@ -315,18 +308,18 @@ public class WMSketchClassification {
         }
     
         @Override
-        public boolean predict(List<Feature> featureValues) {
-            float raw_model_score = dot(featureValues) + modelBias;
+        public boolean Value_Prediction(List<Feature> featureValues) {
+            float raw_model_score = product(featureValues) + modelBias;
             return raw_model_score >= 0 ? true : false;
         }
     
         @Override
-        public boolean update(List<Feature> featureValues, boolean label) {
+        public boolean Internal_weiight_update(List<Feature> featureValues, boolean label) {
             if (featureValues.isEmpty()) {
                 return modelBias >= 0;
             }
     
-            float tmp2 = dot(featureValues);
+            float tmp2 = product(featureValues);
             float raw_model_score = tmp2 + modelBias;
             int classifier_label = label ? 1 : -1;
     
@@ -337,7 +330,7 @@ public class WMSketchClassification {
             float scaledLearningRate = learningRateInitial / tmp1;
     
             boolean predictedLabel = raw_model_score >= 0 ? true : false;
-            float g = Util.logisticGrad(classifier_label * raw_model_score);
+            float g = Helper_Function.logisticGrad(classifier_label * raw_model_score);
     
             scale = scale * (1 - scaledLearningRate * regularizationFactor);
     
@@ -354,7 +347,7 @@ public class WMSketchClassification {
                 } else {
                     float storedWeight = logisticSketch.get(weightIndex);
                     float Updated_weight = storedWeight - Adjusted_weight;
-                    logisticSketch.update(weightIndex, -Adjusted_weight);
+                    logisticSketch.Internal_weiight_update(weightIndex, -Adjusted_weight);
     
                     int heapSize = priorityQueue.getMap().size();
                     if (heapSize < priorityQueue.capacity
@@ -462,7 +455,7 @@ public static class TruncatedModel implements TopKFeatures {
         }
     }
 
-    private float dot(List<Feature> featureValues) {
+    private float product(List<Feature> featureValues) {
         float sum = 0.0f;
         int i = 0;
         while (i < featureValues.size()) {
@@ -475,14 +468,14 @@ public static class TruncatedModel implements TopKFeatures {
     }
 
     @Override
-    public boolean predict(List<Feature> featureValues) {
-        float score = dot(featureValues) + modelBias;
+    public boolean Value_Prediction(List<Feature> featureValues) {
+        float score = product(featureValues) + modelBias;
         return score >= 0 ? true : false;
     }
 
     @Override
-    public boolean update(List<Feature> featureValues, boolean label) {
-        float raw = dot(featureValues);
+    public boolean Internal_weiight_update(List<Feature> featureValues, boolean label) {
+        float raw = product(featureValues);
         float raw_model_score = raw + modelBias;
 
         int classifier_label = label ? 1 : -1;
@@ -494,7 +487,7 @@ public static class TruncatedModel implements TopKFeatures {
         float regularizationDecay = 1.0f - scaledLearningRate * regularizationFactor;
         scale       = scale * regularizationDecay;
 
-        float g = Util.logisticGrad(classifier_label * raw_model_score);
+        float g = Helper_Function.logisticGrad(classifier_label * raw_model_score);
 
         int j = 0;
         while (j < featureValues.size()) {
@@ -542,7 +535,7 @@ public static class TruncatedModel implements TopKFeatures {
             return abs % hashTableSize;
         }
     
-        public boolean predict(List<Feature> featureList) {
+        public boolean Value_Prediction(List<Feature> featureList) {
             float sum = modelBias;
     
             Iterator<Feature> it = featureList.iterator();
@@ -557,7 +550,7 @@ public static class TruncatedModel implements TopKFeatures {
             return sum >= 0 ? true : false;
         }
     
-        public boolean update(float[] updatedWeights, List<Feature> featureList, boolean label) {
+        public boolean Internal_weiight_update(float[] updatedWeights, List<Feature> featureList, boolean label) {
             int classifier_label = label ? 1 : -1;
     
             float raw_model_score = modelBias;
@@ -571,7 +564,7 @@ public static class TruncatedModel implements TopKFeatures {
             }
     
             float yZ   = classifier_label * raw_model_score;
-            float grad = Util.logisticGrad(yZ);
+            float Gradient = Helper_Function.logisticGrad(yZ);
             float scaledLearningRate   = 0.1f;
     
             Iterator<Feature> it2 = featureList.iterator();
@@ -579,7 +572,7 @@ public static class TruncatedModel implements TopKFeatures {
                 Feature f = it2.next();
                 int weightIndex = hashIndex(f.featureIndex);
                 float priorWeight = modelWeights[weightIndex];
-                float Adjusted_weight = scaledLearningRate * grad * classifier_label * f.featureValue;
+                float Adjusted_weight = scaledLearningRate * Gradient * classifier_label * f.featureValue;
                 float Updated_weight  = priorWeight - Adjusted_weight;
                 modelWeights[weightIndex] = Updated_weight;
             }
@@ -590,10 +583,10 @@ public static class TruncatedModel implements TopKFeatures {
                 i++;
             }
     
-            return predict(featureList);
+            return Value_Prediction(featureList);
         }
     
-        public void update(int key, float Adjusted_weight) {
+        public void Internal_weiight_update(int key, float Adjusted_weight) {
             int weightIndex    = hashIndex(key);
             float priorWeight = modelWeights[weightIndex];
             float Updated_weight = priorWeight + Adjusted_weight;
@@ -763,7 +756,7 @@ public static class TruncatedModel implements TopKFeatures {
             this.totalNegativeExamples   = 0;
         }
     
-        private float dot(List<Feature> featureList) {
+        private float product(List<Feature> featureList) {
             float sum = modelBias;
             for (Feature f : featureList) {
                 int weightIndex = f.featureIndex;
@@ -798,13 +791,13 @@ public static class TruncatedModel implements TopKFeatures {
         }
     
         @Override
-        public boolean predict(List<Feature> featureList) {
-            float raw_model_score = dot(featureList);
+        public boolean Value_Prediction(List<Feature> featureList) {
+            float raw_model_score = product(featureList);
             return raw_model_score >= 0;
         }
     
         @Override
-        public boolean update(List<Feature> featureList, boolean label) {
+        public boolean Internal_weiight_update(List<Feature> featureList, boolean label) {
             if (label) {
                 totalPositiveExamples++;
             } else {
@@ -820,16 +813,16 @@ public static class TruncatedModel implements TopKFeatures {
             }
     
             int classifier_label = label ? 1 : -1;
-            float raw_model_score = dot(featureList);
-            float grad = Util.logisticGrad(classifier_label * raw_model_score);
+            float raw_model_score = product(featureList);
+            float Gradient = Helper_Function.logisticGrad(classifier_label * raw_model_score);
             float scaledLearningRate = learningRateInitial / (1.0f + learningRateInitial * regularizationFactor * iterationCount);
             for (Feature f : featureList) {
                 int weightIndex = f.featureIndex;
                 if (weightIndex < modelWeights.length) {
-                    modelWeights[weightIndex] -= scaledLearningRate * classifier_label * grad * f.featureValue;
+                    modelWeights[weightIndex] -= scaledLearningRate * classifier_label * Gradient * f.featureValue;
                 }
             }
-            modelBias -= scaledLearningRate * classifier_label * grad;
+            modelBias -= scaledLearningRate * classifier_label * Gradient;
             iterationCount++;
             return raw_model_score >= 0;
         }
@@ -844,7 +837,6 @@ public static class TruncatedModel implements TopKFeatures {
             return list.size() > topKFeatures ? list.subList(0, topKFeatures) : list;
         }
     
-        /** New method to satisfy TopKFeatures interface **/
         @Override
         public float getBias() {
             return modelBias;
@@ -863,7 +855,7 @@ public static class TruncatedModel implements TopKFeatures {
     
     
 
-    // Training and Testing Functions
+    // Training 
     public static class TrainResult {
         public long runtimeMs;
         public int incorrectPredictions;
@@ -884,7 +876,7 @@ public static class TruncatedModel implements TopKFeatures {
         if (iters == 0) {
             for (int e = 0; e < epochs; e++) {
                 for (SparseExample example : dataset.examples) {
-                    boolean predictedLabel = model.update(example.featureList, example.label == 1);
+                    boolean predictedLabel = model.Internal_weiight_update(example.featureList, example.label == 1);
                     if (predictedLabel != (example.label == 1)) incorrectPredictions++;
                     count++;
                 }
@@ -892,7 +884,7 @@ public static class TruncatedModel implements TopKFeatures {
         } else {
             for (int i = 0; i < iters; i++) {
                 SparseExample example = dataset.examples.get(rand.nextInt(dataset.examples.size()));
-                boolean predictedLabel = model.update(example.featureList, example.label == 1);
+                boolean predictedLabel = model.Internal_weiight_update(example.featureList, example.label == 1);
                 if (predictedLabel != (example.label == 1)) incorrectPredictions++;
                 count++;
             }
@@ -917,10 +909,16 @@ public static class TruncatedModel implements TopKFeatures {
         long startTime = System.currentTimeMillis();
         for (SparseExample example : dataset.examples) {
             boolean classifier_label = (example.label == 1);
-            boolean predictedLabel = model.predict(example.featureList);
-            tp += (classifier_label && predictedLabel) ? 1 : 0;
-            fp += (!classifier_label && predictedLabel) ? 1 : 0;
-            fn += (classifier_label && !predictedLabel) ? 1 : 0;
+            boolean predictedLabel = model.Value_Prediction(example.featureList);
+            if (classifier_label && predictedLabel) {
+                tp++;
+            }           
+            if (!classifier_label && predictedLabel) {
+                fp++;
+            }           
+            if (classifier_label && !predictedLabel) {
+                fn++;
+            }            
         }
         long runtime = System.currentTimeMillis() - startTime;
         float precision = (tp + fp == 0) ? 1.0f : (float) tp / (tp + fp);
@@ -1022,31 +1020,15 @@ public static class TruncatedModel implements TopKFeatures {
             System.err.println("Error reading training data: " + e.getMessage());
             System.exit(1);
         }
-        //SparseDataset testDataset = null;
-                // Continue main after reading test dataset
-                // if (!testingFilePath.isEmpty()) {
-                //     System.err.println("Reading testing data from " + testingFilePath);
-                //     try {
-                //         long startTest = System.currentTimeMillis();
-                //         testDataset = readLibSVM(testingFilePath);
-                //         long testLoadMs = System.currentTimeMillis() - startTest;
-                //         System.err.println("Read testing data in " + testLoadMs + "ms");
-                //     } catch (IOException e) {
-                //         System.err.println("Error reading testing data: " + e.getMessage());
-                //         System.exit(1);
-                //     }
-                // }
         
                 if (topKFeatures == 0) {
                     topKFeatures = trainDataset.dimensionality;
                 }
         
-                // Prepare parameters JSON
                 JSONObject params = new JSONObject();
                 params.put("method", method);
                 System.err.println(params.toString(2));
         
-                // Instantiate model
                 TopKFeatures model = null;
                 switch (method) {
                     case "UncompressedLogisticRegression":
@@ -1090,7 +1072,6 @@ public static class TruncatedModel implements TopKFeatures {
         results.put("top_indices", indices);
         results.put("top_weights", weightsList);
 
-        // PMI-specific JSON
         if (method.equals("PMI")) {
             PMI pmModel = (PMI) model;
             Map<Integer, Double> featureAssociationMap = pmModel.getTopFeaturesPMI();
@@ -1100,7 +1081,6 @@ public static class TruncatedModel implements TopKFeatures {
         // Output JSON
         //System.out.println(results.toString(2));
 
-        // Also print summary
         StringBuilder sb = new StringBuilder();
         sb.append("Parameters:\n");
         sb.append("  Method: " + params.get("method") + "\n\n");
@@ -1110,14 +1090,6 @@ public static class TruncatedModel implements TopKFeatures {
         sb.append("  Train count: " + trainingResults.count + "\n");
         sb.append("  Train error rate: " + ((double) trainingResults.incorrectPredictions / trainingResults.count) + "\n");
         sb.append("  Bias: " + model.getBias() + "\n");
-        // if (testDataset != null) {
-        //     TestResult tr = test(model, testDataset);
-        //     sb.append("  Test time (ms): " + tr.runtimeMs + "\n");
-        //     sb.append("  Test precision: " + tr.precision + "\n");
-        //     sb.append("  Test recall: " + tr.recall + "\n");
-        //     double f1Score = 2.0 * tr.precision * tr.recall / (tr.precision + tr.recall);
-        //     sb.append("  Test F1 score: " + f1Score + "\n");
-        // }
         sb.append("  Top indices: " + indices.toString() + "\n");
         sb.append("  Top weights: " + weightsList.toString() + "\n");
         if (method.equals("PMI")) {

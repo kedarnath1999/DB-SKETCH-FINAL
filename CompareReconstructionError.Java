@@ -7,7 +7,10 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.axis.NumberAxis;
-
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+import java.awt.BasicStroke;
+import java.awt.Color;
 
 public class CompareReconstructionError {
 
@@ -136,6 +139,19 @@ public class CompareReconstructionError {
             reconDS, PlotOrientation.VERTICAL,
             true, true, false
         );
+
+        CategoryPlot plot = (CategoryPlot) chart.getPlot();
+        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+
+        renderer.setSeriesPaint(0, Color.RED);
+        renderer.setSeriesStroke(0, new BasicStroke(3.0f));
+
+        renderer.setSeriesPaint(1, Color.BLUE);
+        renderer.setSeriesStroke(1, new BasicStroke(3.0f));
+
+        renderer.setSeriesPaint(2, Color.GREEN);
+        renderer.setSeriesStroke(2, new BasicStroke(3.0f));
+
 
         ChartFrame frame = new ChartFrame(" Error", chart);
         frame.pack();
