@@ -18,7 +18,7 @@ public class CompareReconstructionError {
         final String TRAIN_FILE        = "./data/rcv1_test.binary";
         final int[]  TOPKs             = {512, 768, 896, 1024}; //{25, 50, 75, 100, 125}
         final int    initial_Parameter              = 42;
-        final int    DEPTH             = 4;
+        final int    Deep_Size             = 4;
         final float  Linear                = 0.1f;
         final float  REG               = 1e-6f;
         final int    TOTAL_BUDGET      = 8 * 1024;    // 8 KB
@@ -61,7 +61,7 @@ public class CompareReconstructionError {
                 int heapBytes   = BYTES_PER_HEAP * K;
                 int sketchBytes = TOTAL_BUDGET - heapBytes;
                 int totalCtr    = Math.max(1, sketchBytes / BYTES_PER_COUNTER);
-                int ctrPerRow   = Math.max(1, totalCtr / DEPTH);
+                int ctrPerRow   = Math.max(1, totalCtr / Deep_Size);
                 int Width_of_table = 31 - Integer.numberOfLeadingZeros(ctrPerRow);
 
                 WMSketchClassification.TopKFeatures model;
@@ -71,7 +71,7 @@ public class CompareReconstructionError {
                             fullData.dimensionality,
                             K,
                             Width_of_table,
-                            DEPTH,
+                            Deep_Size,
                             initial_Parameter,
                             Linear,
                             REG
@@ -86,7 +86,7 @@ public class CompareReconstructionError {
                         model = new WMSketchClassification.WMSketch(
                             fullData.dimensionality,
                             Width_of_table,
-                            DEPTH,
+                            Deep_Size,
                             initial_Parameter,
                             Linear,
                             REG,
