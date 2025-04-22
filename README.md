@@ -72,10 +72,6 @@ Your training and test datasets must follow LIBSVM format:
   java -cp json.jar:. WMSketchClassification --train=./data/rcv1_test.binary --method=TruncatedModel
   ```
 
-- **PMI Logistic**:
-  ```bash
-  java -cp json.jar:. WMSketchClassification --train=./data/rcv1_test.binary --method=PMI --topk=512
-  ```
 
 ## Graph Comparison
 
