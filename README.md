@@ -73,24 +73,9 @@ Your training and test datasets must follow LIBSVM format:
   ```
 
 
+
+
 ## Graph Comparison
-
-To compare methods and memory budgets visually:
-
-### Compile
-
-```bash
-javac -cp .:json.jar:jfreechart-1.5.0.jar:jcommon-1.0.23.jar CompareMethods.java
-```
-
-### Run
-
-```bash
-java -cp .:json.jar:jfreechart-1.5.0.jar:jcommon-1.0.23.jar CompareMethods
-```
-
-## Memory Comparison and Reconstruction Error
-
 ### Compile
 
 ```bash
