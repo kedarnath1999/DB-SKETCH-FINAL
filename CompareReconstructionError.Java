@@ -16,6 +16,7 @@ public class CompareReconstructionError {
 
     public static void main(String[] args) throws IOException {
         final String TRAIN_FILE        = "./data/rcv1_test.binary";
+<<<<<<< Updated upstream
         final int[]  TOPKs             = {512, 768, 896, 1024}; //{25, 50, 75, 100, 125}
         final int    initial_Parameter              = 42;
         final int    Deep_Size             = 4;
@@ -24,6 +25,16 @@ public class CompareReconstructionError {
         final int    TOTAL_BUDGET      = 8 * 1024;    // 8 KB
         final int    BYTES_PER_HEAP    = 8;           
         final int    BYTES_PER_COUNTER = 4;           
+=======
+        final int[]  TOPKs             = {0,25,50,100,150}; //{25, 50, 75, 100, 125}
+        final int    SEED              = 42;
+        final int    DEPTH             = 4;
+        final float  LR                = 0.1f;
+        final float  REG               = 1e-6f;
+        final int    TOTAL_BUDGET      = 16 * 1024;    // 8 KB
+        final int    BYTES_PER_HEAP    = 8;           // bytes per heap entry
+        final int    BYTES_PER_COUNTER = 4;           // bytes per sketch counter
+>>>>>>> Stashed changes
 
         System.err.println("Loading training data...");
         WMSketchClassification.SparseDataset fullData =
@@ -128,14 +139,20 @@ public class CompareReconstructionError {
 
                 reconDS.addValue(relative_error, method, Integer.toString(K));
 
+<<<<<<< Updated upstream
                 System.out.printf("%s | K=%4d → reconErr=%.4f%n",
                                   method, K, relative_error);
+=======
+                // Console output: only reconstruction error
+                System.out.printf("%s | K=%4d → Err=%.4f%n",
+                                  method, K, relErr);
+>>>>>>> Stashed changes
             }
         }
 
         JFreeChart chart = ChartFactory.createLineChart(
-            "Error vs Top K For 8kb",
-            "K", "Rel ℓ₂ Error",
+            "Error vs Top K For 16kb",
+            "K", "Error",
             reconDS, PlotOrientation.VERTICAL,
             true, true, false
         );
