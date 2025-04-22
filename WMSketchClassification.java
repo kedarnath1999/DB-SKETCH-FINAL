@@ -1022,20 +1022,20 @@ public static class TruncatedModel implements TopKFeatures {
             System.err.println("Error reading training data: " + e.getMessage());
             System.exit(1);
         }
-        SparseDataset testDataset = null;
+        //SparseDataset testDataset = null;
                 // Continue main after reading test dataset
-                if (!testingFilePath.isEmpty()) {
-                    System.err.println("Reading testing data from " + testingFilePath);
-                    try {
-                        long startTest = System.currentTimeMillis();
-                        testDataset = readLibSVM(testingFilePath);
-                        long testLoadMs = System.currentTimeMillis() - startTest;
-                        System.err.println("Read testing data in " + testLoadMs + "ms");
-                    } catch (IOException e) {
-                        System.err.println("Error reading testing data: " + e.getMessage());
-                        System.exit(1);
-                    }
-                }
+                // if (!testingFilePath.isEmpty()) {
+                //     System.err.println("Reading testing data from " + testingFilePath);
+                //     try {
+                //         long startTest = System.currentTimeMillis();
+                //         testDataset = readLibSVM(testingFilePath);
+                //         long testLoadMs = System.currentTimeMillis() - startTest;
+                //         System.err.println("Read testing data in " + testLoadMs + "ms");
+                //     } catch (IOException e) {
+                //         System.err.println("Error reading testing data: " + e.getMessage());
+                //         System.exit(1);
+                //     }
+                // }
         
                 if (topKFeatures == 0) {
                     topKFeatures = trainDataset.dimensionality;
@@ -1073,10 +1073,10 @@ public static class TruncatedModel implements TopKFeatures {
                 // Train
                 TrainResult trainingResults = train(model, trainDataset, iters, epochs, initial_Parameter, sample);
                 JSONObject results = new JSONObject();
-                results.put("train_ms", trainingResults.runtimeMs);
-                results.put("train_err_count", trainingResults.incorrectPredictions);
-                results.put("train_count", trainingResults.count);
-                results.put("train_err_rate", (double) trainingResults.incorrectPredictions / trainingResults.count);
+                results.put("Training_time", trainingResults.runtimeMs);
+                results.put("Train_Error_Count", trainingResults.incorrectPredictions);
+                results.put("Total_no_of_features_trained", trainingResults.count);
+                results.put("Train_error_rate", (double) trainingResults.incorrectPredictions / trainingResults.count);
                 results.put("bias", model.getBias());
         
         
@@ -1110,14 +1110,14 @@ public static class TruncatedModel implements TopKFeatures {
         sb.append("  Train count: " + trainingResults.count + "\n");
         sb.append("  Train error rate: " + ((double) trainingResults.incorrectPredictions / trainingResults.count) + "\n");
         sb.append("  Bias: " + model.getBias() + "\n");
-        if (testDataset != null) {
-            TestResult tr = test(model, testDataset);
-            sb.append("  Test time (ms): " + tr.runtimeMs + "\n");
-            sb.append("  Test precision: " + tr.precision + "\n");
-            sb.append("  Test recall: " + tr.recall + "\n");
-            double f1Score = 2.0 * tr.precision * tr.recall / (tr.precision + tr.recall);
-            sb.append("  Test F1 score: " + f1Score + "\n");
-        }
+        // if (testDataset != null) {
+        //     TestResult tr = test(model, testDataset);
+        //     sb.append("  Test time (ms): " + tr.runtimeMs + "\n");
+        //     sb.append("  Test precision: " + tr.precision + "\n");
+        //     sb.append("  Test recall: " + tr.recall + "\n");
+        //     double f1Score = 2.0 * tr.precision * tr.recall / (tr.precision + tr.recall);
+        //     sb.append("  Test F1 score: " + f1Score + "\n");
+        // }
         sb.append("  Top indices: " + indices.toString() + "\n");
         sb.append("  Top weights: " + weightsList.toString() + "\n");
         if (method.equals("PMI")) {

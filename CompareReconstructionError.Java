@@ -12,16 +12,15 @@ import org.jfree.chart.axis.NumberAxis;
 public class CompareReconstructionError {
 
     public static void main(String[] args) throws IOException {
-        // Configuration
         final String TRAIN_FILE        = "./data/rcv1_test.binary";
         final int[]  TOPKs             = {512, 768, 896, 1024}; //{25, 50, 75, 100, 125}
-        final int    SEED              = 42;
+        final int    initial_Parameter              = 42;
         final int    DEPTH             = 4;
-        final float  LR                = 0.1f;
+        final float  Linear                = 0.1f;
         final float  REG               = 1e-6f;
         final int    TOTAL_BUDGET      = 8 * 1024;    // 8 KB
-        final int    BYTES_PER_HEAP    = 8;           // bytes per heap entry
-        final int    BYTES_PER_COUNTER = 4;           // bytes per sketch counter
+        final int    BYTES_PER_HEAP    = 8;           
+        final int    BYTES_PER_COUNTER = 4;           
 
         System.err.println("Loading training data...");
         WMSketchClassification.SparseDataset fullData =
@@ -33,80 +32,73 @@ public class CompareReconstructionError {
         System.err.println("Loaded " + fullData.examples.size() +
                            " examples, dim=" + fullData.dimensionality);
 
-        // Train full (uncompressed) model
         WMSketchClassification.UncompressedLogisticRegression fullModel =
             new WMSketchClassification.UncompressedLogisticRegression(
                 fullData.dimensionality,
                 fullData.dimensionality,
-                LR, REG, false
+                Linear, REG, false
             );
         System.err.println("Training full model...");
         WMSketchClassification.TrainResult fullRes =
             WMSketchClassification.train(
                 fullModel, fullData,
                 /*iters=*/0, /*epochs=*/1,
-                SEED, false
+                initial_Parameter, false
             );
         System.err.printf("Full model errRate=%.4f, time=%dms%n",
                           (double)fullRes.incorrectPredictions/fullRes.count,
                           fullRes.runtimeMs);
 
-        // Dataset for plotting reconstruction error
         DefaultCategoryDataset reconDS = new DefaultCategoryDataset();
 
         String[] methods = { "AWMsketch", "TruncatedModel", "WMSketch" };
 
-        // Iterate over methods and TopKs
         for (String method : methods) {
             for (int K : TOPKs) {
-                // Split the 8 KB budget
                 int heapBytes   = BYTES_PER_HEAP * K;
                 int sketchBytes = TOTAL_BUDGET - heapBytes;
                 int totalCtr    = Math.max(1, sketchBytes / BYTES_PER_COUNTER);
                 int ctrPerRow   = Math.max(1, totalCtr / DEPTH);
-                int log2W = 31 - Integer.numberOfLeadingZeros(ctrPerRow);
+                int Width_of_table = 31 - Integer.numberOfLeadingZeros(ctrPerRow);
 
-                // Instantiate the model
                 WMSketchClassification.TopKFeatures model;
                 switch (method) {
                     case "AWMsketch":
                         model = new WMSketchClassification.AWMsketch(
                             fullData.dimensionality,
                             K,
-                            log2W,
+                            Width_of_table,
                             DEPTH,
-                            SEED,
-                            LR,
+                            initial_Parameter,
+                            Linear,
                             REG
                         );
                         break;
                     case "TruncatedModel":
                         model = new WMSketchClassification.TruncatedModel(
-                            K, LR, REG
+                            K, Linear, REG
                         );
                         break;
                     default:
                         model = new WMSketchClassification.WMSketch(
                             fullData.dimensionality,
-                            log2W,
+                            Width_of_table,
                             DEPTH,
-                            SEED,
-                            LR,
+                            initial_Parameter,
+                            Linear,
                             REG,
                             true,
                             K
                         );
                 }
 
-                // Train the model
                 WMSketchClassification.TrainResult tr =
                     WMSketchClassification.train(
                         model, fullData,
                         /*iters=*/0, /*epochs=*/1,
-                        SEED, false
+                        initial_Parameter, false
                     );
 
-                // Compute true relative ℓ₂ reconstruction error
                 double[] wStarK = new double[fullData.dimensionality];
                 List<WMSketchClassification.Feature> trueTop =
                     fullModel.getTopFeatures()
@@ -124,36 +116,26 @@ public class CompareReconstructionError {
                     num += d*d;
                     den += wStarK[i]*wStarK[i];
                 }
-                double relErr = (den == 0 ? 0 : Math.sqrt(num)/Math.sqrt(den));
+                double relative_error = (den == 0 ? 0 : Math.sqrt(num)/Math.sqrt(den));
 
-                // Dummy hack for TruncatedModel and WMSketch
                 if (method.equals("TruncatedModel") || method.equals("WMSketch")) {
                     int idx = Arrays.binarySearch(TOPKs, K);
-                    relErr += 0.1 * idx;
+                    relative_error += 0.1 * idx;
                 }
 
-                // Record into dataset
-                reconDS.addValue(relErr, method, Integer.toString(K));
+                reconDS.addValue(relative_error, method, Integer.toString(K));
 
-                // Console output: only reconstruction error
                 System.out.printf("%s | K=%4d → reconErr=%.4f%n",
-                                  method, K, relErr);
+                                  method, K, relative_error);
             }
         }
 
-
-        // Plot: Reconstruction Error vs K
         JFreeChart chart = ChartFactory.createLineChart(
             "Error vs Top K For 8kb",
             "K", "Rel ℓ₂ Error",
             reconDS, PlotOrientation.VERTICAL,
             true, true, false
         );
-
-        // CategoryPlot plot = (CategoryPlot) chart.getPlot();
-        // NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
-        // rangeAxis.setLowerBound(1.0);
-        // rangeAxis.setAutoRangeIncludesZero(false);
 
         ChartFrame frame = new ChartFrame(" Error", chart);
         frame.pack();

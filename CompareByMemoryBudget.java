@@ -37,7 +37,7 @@ public class CompareByMemoryBudget {
             for (Map.Entry<String, int[]> entry : memoryConfigs.entrySet()) {
                 String label = entry.getKey();
                 int[] config = entry.getValue();
-                int log2Width = config[0];
+                int Width_of_table = config[0];
                 int depth = config[1];
 
                 List<String> command = new ArrayList<>();
@@ -47,7 +47,7 @@ public class CompareByMemoryBudget {
                 command.add("WMSketchClassification");
                 command.add("--train=" + trainFile);
                 command.add("--method=" + method);
-                command.add("--log2_width=" + log2Width);
+                command.add("--log2_width=" + Width_of_table);
                 command.add("--depth=" + depth);
 
                 ProcessBuilder pb = new ProcessBuilder(command);
