@@ -19,9 +19,6 @@ This project implements several variants of logistic regression models optimized
    - Stores only top‑K feature weights explicitly.
    - All other weights are treated as zero.
 
-5. **PMI-based Classification**
-   - Uses Pointwise Mutual Information between feature and label distributions to guide learning.
-
 ## Requirements
 
 - Java 8 or higher
@@ -44,11 +41,6 @@ To run with a training file:
 java -cp json.jar:. WMSketchClassification --train=./data/rcv1_test.binary --method=AWMsketch
 ```
 
-To see all command-line options:
-
-```bash
-java -cp json.jar:. WMSketchClassification --help
-```
 
 ## Data Format
 
